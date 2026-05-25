@@ -7,3 +7,8 @@ companies = [
     ["Konsalnet", "Poznań"],
     ["Juwentus", "Gdańsk"]]
 read_data_company(companies)
+
+def add_company(company_data: list) -> None:
+    name = input('Podaj nazwę firmy: ')
+    location = input('Podaj lokalizację: ')
+    company_data.append([name, location])
