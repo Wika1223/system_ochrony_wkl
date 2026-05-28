@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 import tkintermapview
-from system_lib.model import Firma, Klient, Pracownik
+from system_lib.model import Firma, Klient, Pracownik, Wartownia
 
 #BAZA
 companies = [
@@ -19,10 +19,15 @@ employees = [
     Pracownik("Katarzyna", "Kamińska", "Kraków", "Konsalnet", "444-555-666"),
     Pracownik("Tomasz", "Lewandowski", "Poznań", "Securitas", "777-888-999")]
 
+guardhouses = [
+    Wartownia("Wartownia Północ", "Gdynia", "Konsalnet"),
+    Wartownia("Wartownia Centrum", "Warszawa", "Solid Security")]
+
 def zaktualizuj_listy_wyboru():
     nazwy_firm = [f.nazwa for f in companies]
     combobox_firma_klienta['values'] = nazwy_firm
     combobox_firma_pracownika['values'] = nazwy_firm
+    combobox_firma_wartowni['values'] = nazwy_firm
 
 
 # FUNKCJE
@@ -226,6 +231,61 @@ def update_employee(i):
     show_employees()
     filtruj_mape()
 
+# WARTOWNIE
+def show_guardhouses():
+    listbox_wartownie.delete(0, END)
+    for idx, wartownia in enumerate(guardhouses):
+        listbox_wartownie.insert(idx, wartownia.nazwa)
+
+def add_guardhouse():
+    new_guardhouse = Wartownia(nazwa=entry_nazwa_wartowni.get(),lokalizacja=entry_lokalizacja_wartowni.get(),
+                               przypisana_firma=combobox_firma_wartowni.get())
+    guardhouses.append(new_guardhouse)
+    entry_nazwa_wartowni.delete(0, END)
+    entry_lokalizacja_wartowni.delete(0, END)
+    combobox_firma_wartowni.set('')
+    show_guardhouses()
+    filtruj_mape()
+
+def remove_guardhouse():
+    i = listbox_wartownie.index(ACTIVE)
+    guardhouses.pop(i)
+    show_guardhouses()
+    filtruj_mape()
+
+def show_guardhouse_details():
+    i = listbox_wartownie.index(ACTIVE)
+    label_det_wart_nazwa_val.config(text=guardhouses[i].nazwa)
+    label_det_wart_lok_val.config(text=guardhouses[i].lokalizacja)
+    label_det_wart_firma_val.config(text=guardhouses[i].przypisana_firma)
+    if guardhouses[i].coordinates:
+        map_widget.set_position(guardhouses[i].coordinates[0], guardhouses[i].coordinates[1])
+        map_widget.set_zoom(12)
+
+def edit_guardhouse():
+    i = listbox_wartownie.index(ACTIVE)
+    entry_nazwa_wartowni.delete(0, END)
+    entry_lokalizacja_wartowni.delete(0, END)
+    combobox_firma_wartowni.set('')
+
+    entry_nazwa_wartowni.insert(0, guardhouses[i].nazwa)
+    entry_lokalizacja_wartowni.insert(0, guardhouses[i].lokalizacja)
+    combobox_firma_wartowni.set(guardhouses[i].przypisana_firma)
+
+    button_dodaj_wartownie.config(text="Zapisz zmiany", command=lambda: update_guardhouse(i))
+
+def update_guardhouse(i):
+    guardhouses[i].nazwa = entry_nazwa_wartowni.get()
+    guardhouses[i].lokalizacja = entry_lokalizacja_wartowni.get()
+    guardhouses[i].przypisana_firma = combobox_firma_wartowni.get()
+    guardhouses[i].coordinates = guardhouses[i].get_coordinates()
+
+    button_dodaj_wartownie.config(text="Dodaj wartownię", command=add_guardhouse)
+    entry_nazwa_wartowni.delete(0, END)
+    entry_lokalizacja_wartowni.delete(0, END)
+    combobox_firma_wartowni.set('')
+    show_guardhouses()
+    filtruj_mape()
 
 root=Tk()
 root.title("System Ochrony - WKL")
@@ -418,10 +478,56 @@ Label(ramka_szczegoly_prac, text="Firma:").grid(row=2, column=2, sticky=W)
 label_det_prac_firma_val = Label(ramka_szczegoly_prac, text="...")
 label_det_prac_firma_val.grid(row=2, column=3, sticky=W, padx=10)
 
+# WARTOWNIE
+# RAMKI
+ramka_lista_wart = Frame(tab_wartownie)
+ramka_formularz_wart = Frame(tab_wartownie)
+ramka_szczegoly_wart = Frame(tab_wartownie)
+
+ramka_lista_wart.grid(row=0, column=0, padx=20, pady=10, sticky=N)
+ramka_formularz_wart.grid(row=0, column=1, padx=20, pady=10, sticky=N)
+ramka_szczegoly_wart.grid(row=1, column=0, columnspan=2, padx=20, pady=10, sticky=W)
+
+# Lista
+Label(ramka_lista_wart, text="Lista wartowni:").grid(row=0, column=0, sticky=W)
+listbox_wartownie = Listbox(ramka_lista_wart, width=30)
+listbox_wartownie.grid(row=1, column=0, columnspan=3, pady=5)
+Button(ramka_lista_wart, text="Szczegóły", command=show_guardhouse_details).grid(row=2, column=0)
+Button(ramka_lista_wart, text="Usuń", command=remove_guardhouse).grid(row=2, column=1)
+Button(ramka_lista_wart, text="Edytuj", command=edit_guardhouse).grid(row=2, column=2)
+
+# Formularz
+Label(ramka_formularz_wart, text="Formularz:").grid(row=0, column=0, columnspan=2, sticky=W)
+Label(ramka_formularz_wart, text="Nazwa:").grid(row=1, column=0, sticky=W)
+Label(ramka_formularz_wart, text="Lokalizacja:").grid(row=2, column=0, sticky=W)
+Label(ramka_formularz_wart, text="Firma:").grid(row=3, column=0, sticky=W)
+
+entry_nazwa_wartowni = Entry(ramka_formularz_wart)
+entry_lokalizacja_wartowni = Entry(ramka_formularz_wart)
+combobox_firma_wartowni = ttk.Combobox(ramka_formularz_wart, state='readonly')
+
+entry_nazwa_wartowni.grid(row=1, column=1)
+entry_lokalizacja_wartowni.grid(row=2, column=1)
+combobox_firma_wartowni.grid(row=3, column=1)
+
+button_dodaj_wartownie = Button(ramka_formularz_wart, text="Dodaj wartownię", command=add_guardhouse)
+button_dodaj_wartownie.grid(row=4, column=0, columnspan=2, pady=10)
+
+# Szczegóły
+Label(ramka_szczegoly_wart, text="Szczegóły wartowni:").grid(row=0, column=0, sticky=W)
+Label(ramka_szczegoly_wart, text="Nazwa:").grid(row=1, column=0, sticky=W)
+label_det_wart_nazwa_val = Label(ramka_szczegoly_wart, text="...")
+label_det_wart_nazwa_val.grid(row=1, column=1, sticky=W, padx=10)
+Label(ramka_szczegoly_wart, text="Lokalizacja:").grid(row=1, column=2, sticky=W)
+label_det_wart_lok_val = Label(ramka_szczegoly_wart, text="...")
+label_det_wart_lok_val.grid(row=1, column=3, sticky=W, padx=10)
+Label(ramka_szczegoly_wart, text="Firma:").grid(row=1, column=4, sticky=W)
+label_det_wart_firma_val = Label(ramka_szczegoly_wart, text="...")
+label_det_wart_firma_val.grid(row=1, column=5, sticky=W, padx=10)
 
 # FILTROWANIE MAPY - ZAKŁADKI
 def filtruj_mape(event=None):
-    for lista in [companies, clients, employees]:
+    for lista in [companies, clients, employees, guardhouses]:
         for obiekt in lista:
             if hasattr(obiekt, 'marker') and obiekt.marker is not None:
                 try:
@@ -440,6 +546,9 @@ def filtruj_mape(event=None):
         for p in employees:
             p.marker = map_widget.set_marker(p.coordinates[0], p.coordinates[1],
                                              text=f"Pracownik: {p.imie} {p.nazwisko}")
+    elif wybrana_zakladka == "WARTOWNIE":
+        for w in guardhouses:
+            w.marker = map_widget.set_marker(w.coordinates[0], w.coordinates[1], text=f"Wartownia: {w.nazwa}")
 
 
 
@@ -448,6 +557,8 @@ notebook.bind("<<NotebookTabChanged>>", filtruj_mape)
 show_companies()
 show_clients()
 show_employees()
+show_guardhouses()
+zaktualizuj_listy_wyboru()
 
 filtruj_mape()
 root.mainloop()
