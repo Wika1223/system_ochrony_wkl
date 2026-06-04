@@ -8,6 +8,8 @@ companies = [
     Firma("Solid Security", "Warszawa", "521-03-21-528", "ul. Postępu 17"),
     Firma("Konsalnet", "Kraków", "527-20-27-282", "ul. Kamińskiego 1"),
     Firma("Securitas", "Poznań", "522-23-40-331", "ul. Dąbrowskiego 79A")]
+for f in companies:
+    print(f"Test pobierania - {f.nazwa} ({f.lokalizacja}): {f.coordinates}")
 
 clients = [
     Klient("Jan", "Kowalski", "Wrocław", "Solid Security"),
@@ -34,8 +36,17 @@ def zaktualizuj_listy_wyboru():
 # FIRMY
 def show_companies():
     listbox_firmy.delete(0, END)
-    for idx, firma in enumerate(companies):
-        listbox_firmy.insert(idx, firma.nazwa)
+    filtr = entry_filtr_firmy.get().lower()
+    kryterium = combo_kryterium_firmy.get()
+    for firma in companies:
+
+        if kryterium == "Lokalizacja":
+            if filtr in firma.lokalizacja.lower():
+                listbox_firmy.insert(END, firma.nazwa)
+        elif kryterium == "Nazwa":
+            if filtr in firma.nazwa.lower():
+                listbox_firmy.insert(END, firma.nazwa)
+
 
 def add_company():
     new_company = Firma(nazwa=entry_nazwa_firmy.get(), lokalizacja=entry_lokalizacja_firmy.get(),
@@ -51,6 +62,7 @@ def add_company():
 
 def remove_company():
     i = listbox_firmy.index(ACTIVE)
+    companies[i].marker.delete()
     companies.pop(i)
     show_companies()
     zaktualizuj_listy_wyboru()
@@ -96,6 +108,8 @@ def update_company(i):
     zaktualizuj_listy_wyboru()
     filtruj_mape()
 
+
+
 # KLIENCI
 def show_clients():
     listbox_klienci.delete(0, END)
@@ -105,8 +119,7 @@ def show_clients():
 def add_client():
     new_client = Klient(
         imie=entry_imie_klienta.get(), nazwisko=entry_nazwisko_klienta.get(),
-        lokalizacja=entry_lokalizacja_klienta.get(), przypisana_firma=combobox_firma_klienta.get()
-    )
+        lokalizacja=entry_lokalizacja_klienta.get(), przypisana_firma=combobox_firma_klienta.get())
     clients.append(new_client)
     entry_imie_klienta.delete(0, END)
     entry_nazwisko_klienta.delete(0, END)
@@ -117,6 +130,7 @@ def add_client():
 
 def remove_client():
     i = listbox_klienci.index(ACTIVE)
+    clients[i].marker.delete()
     clients.pop(i)
     show_clients()
     filtruj_mape()
@@ -183,6 +197,7 @@ def add_employee():
 
 def remove_employee():
     i = listbox_pracownicy.index(ACTIVE)
+    employees[i].marker.delete()
     employees.pop(i)
     show_employees()
     filtruj_mape()
@@ -231,6 +246,8 @@ def update_employee(i):
     show_employees()
     filtruj_mape()
 
+
+
 # WARTOWNIE
 def show_guardhouses():
     listbox_wartownie.delete(0, END)
@@ -249,6 +266,7 @@ def add_guardhouse():
 
 def remove_guardhouse():
     i = listbox_wartownie.index(ACTIVE)
+    guardhouses[i].marker.delete()
     guardhouses.pop(i)
     show_guardhouses()
     filtruj_mape()
@@ -365,6 +383,22 @@ label_det_firma_nip_val.grid(row=1, column=5, sticky=W, padx=10)
 Label(ramka_szczegoly_firmy, text="Adres:").grid(row=1, column=6, sticky=W)
 label_det_firma_adres_val = Label(ramka_szczegoly_firmy, text="...")
 label_det_firma_adres_val.grid(row=1, column=7, sticky=W, padx=10)
+
+#FILTR FIRM
+ramka_filtr_firmy = Frame(tab_firmy)
+ramka_filtr_firmy.grid(row=12, column=0, columnspan=4, pady=15, padx=20)
+
+Label(ramka_filtr_firmy, text="Filtruj wg:").pack(side=LEFT)
+
+combo_kryterium_firmy = ttk.Combobox(ramka_filtr_firmy, values=["Lokalizacja", "Nazwa"], state="readonly", width=12)
+combo_kryterium_firmy.current(0)
+combo_kryterium_firmy.pack(side=LEFT, padx=5)
+
+entry_filtr_firmy = Entry(ramka_filtr_firmy)
+entry_filtr_firmy.pack(side=LEFT, padx=5)
+
+Button(ramka_filtr_firmy, text="Szukaj", command=lambda: [show_companies(), filtruj_mape()]).pack(side=LEFT, padx=5)
+Button(ramka_filtr_firmy, text="Reset", command=lambda: [entry_filtr_firmy.delete(0, END), show_companies(), filtruj_mape()]).pack(side=LEFT)
 
 # KLIENCI
 # RAMKI
@@ -525,7 +559,7 @@ Label(ramka_szczegoly_wart, text="Firma:").grid(row=1, column=4, sticky=W)
 label_det_wart_firma_val = Label(ramka_szczegoly_wart, text="...")
 label_det_wart_firma_val.grid(row=1, column=5, sticky=W, padx=10)
 
-# FILTROWANIE MAPY - ZAKŁADKI
+# Filtowanie mapy
 def filtruj_mape(event=None):
     for lista in [companies, clients, employees, guardhouses]:
         for obiekt in lista:
@@ -535,24 +569,41 @@ def filtruj_mape(event=None):
                 except:
                     pass
                 obiekt.marker = None
-    wybrana_zakladka = notebook.tab(notebook.select(), "text")
+
+    try:
+        wybrana_zakladka = notebook.tab(notebook.select(), "text")
+    except:
+        return
     if wybrana_zakladka == "FIRMY":
+        filtr = entry_filtr_firmy.get().lower()
+        kryterium = combo_kryterium_firmy.get()
+
         for f in companies:
-            f.marker = map_widget.set_marker(f.coordinates[0], f.coordinates[1], text=f"Firma: {f.nazwa}")
+            if f.coordinates is not None:
+                if (kryterium == "Lokalizacja" and filtr in f.lokalizacja.lower()) or \
+                        (kryterium == "Nazwa" and filtr in f.nazwa.lower()):
+                    f.marker = map_widget.set_marker(f.coordinates[0], f.coordinates[1], text=f"Firma: {f.nazwa}")
+
     elif wybrana_zakladka == "KLIENCI":
         for k in clients:
-            k.marker = map_widget.set_marker(k.coordinates[0], k.coordinates[1], text=f"Klient: {k.imie} {k.nazwisko}")
+            if k.coordinates is not None:
+                k.marker = map_widget.set_marker(k.coordinates[0], k.coordinates[1],
+                                                 text=f"Klient: {k.imie} {k.nazwisko}")
+
     elif wybrana_zakladka == "PRACOWNICY":
         for p in employees:
-            p.marker = map_widget.set_marker(p.coordinates[0], p.coordinates[1],
-                                             text=f"Pracownik: {p.imie} {p.nazwisko}")
+            if p.coordinates is not None:
+                p.marker = map_widget.set_marker(p.coordinates[0], p.coordinates[1],
+                                                 text=f"Pracownik: {p.imie} {p.nazwisko}")
+
     elif wybrana_zakladka == "WARTOWNIE":
         for w in guardhouses:
-            w.marker = map_widget.set_marker(w.coordinates[0], w.coordinates[1], text=f"Wartownia: {w.nazwa}")
-
+            if w.coordinates is not None:
+                w.marker = map_widget.set_marker(w.coordinates[0], w.coordinates[1], text=f"Wartownia: {w.nazwa}")
 
 
 notebook.bind("<<NotebookTabChanged>>", filtruj_mape)
+
 # START
 show_companies()
 show_clients()

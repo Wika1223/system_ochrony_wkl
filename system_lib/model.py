@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import re
+import time
 
 
 def konwertuj_na_dziesietne(tekst: str) -> float:
@@ -26,6 +27,7 @@ class Firma:
         self.coordinates = self.get_coordinates()
 
     def get_coordinates(self) -> list:
+        time.sleep(2)
         url = f'https://pl.wikipedia.org/wiki/{self.lokalizacja}'
         headers = {'User-Agent': 'Mozilla/5.0'}
         response = requests.get(url, headers=headers)
@@ -48,6 +50,7 @@ class Klient:
         self.coordinates = self.get_coordinates()
 
     def get_coordinates(self) -> list:
+        time.sleep(2)
         url = f'https://pl.wikipedia.org/wiki/{self.lokalizacja}'
         headers = {'User-Agent': 'Mozilla/5.0'}
         response = requests.get(url, headers=headers)
@@ -69,6 +72,7 @@ class Pracownik:
         self.coordinates = self.get_coordinates()
 
     def get_coordinates(self) -> list:
+        time.sleep(2)
         url = f'https://pl.wikipedia.org/wiki/{self.lokalizacja}'
         headers = {'User-Agent': 'Mozilla/5.0'}
         response = requests.get(url, headers=headers)
@@ -88,6 +92,7 @@ class Wartownia:
         self.coordinates = self.get_coordinates()
 
     def get_coordinates(self) -> list:
+        time.sleep(2)
         url = f'https://pl.wikipedia.org/wiki/{self.lokalizacja}'
         headers = {'User-Agent': 'Mozilla/5.0'}
         response = requests.get(url, headers=headers)
